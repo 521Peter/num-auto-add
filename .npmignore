@@ -1,0 +1,11 @@
+src/
+node_modules/
+*.test.js
+rollup.config.js
+test
+demo
+.gitignore
+server.cjs
+*.map
+tsconfig.json
+.vscode

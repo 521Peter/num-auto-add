@@ -2,9 +2,24 @@
   "name": "num-auto-add",
   "version": "1.2.1",
   "description": "",
-  "main": "index.js",
+  "main": "dist/numAutoAdd.js",
+  "module": "dist/numAutoAdd.esm.js",
+  "types": "dist/compiler-core.d.ts",
   "scripts": {
+    "build": "rollup -c",
+    "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "buildOptions": {
+    "name": "numAutoAdd"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.1",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^8.3.4",
+    "rollup": "^4.40.0",
+    "tslib": "^2.4.0"
   },
   "keywords": [
     "numAutoAdd",
