@@ -1,43 +1,36 @@
 // totalTime：每次动画执行总时间，默认为700毫秒
 // many：是否执行多次动画，默认为true
+type Element = HTMLElement & { finished: boolean };
 
 export default function (totalTime: number = 700, many: boolean = true) {
   return {
     // 当被绑定的元素插入到 DOM 时调用
-    inserted: function (el: HTMLElement, binding: any) {
-      // flag用来判断是否能执行动画，防止一个时间段内触发多次动画函数
-      binding.flag = true;
-      // 元素在可视区域内才开始执行动画的函数
-      binding.animate = () => {
-        // 获取元素距离可视区域顶部的距离
-        const top = el.getBoundingClientRect().top;
-        // 获取浏览器可视区域的高度(这里考虑了浏览器兼容的问题)
-        const h =
-          document.documentElement.clientHeight || document.body.clientHeight;
-        // 当元素在可视区域内
-        if (top < h) {
-          // 如果动画没在执行
-          if (binding.flag) {
-            binding.flag = false;
-            const finalNum = el.innerHTML; // 要显示的真实数值
-            animateNumber(el, Number(finalNum), Date.now(), totalTime); // 执行数字自增动画
-            // 如果只执行一次动画，则解绑滚动事件
-            !many && window.removeEventListener("scroll", binding.animate);
-          }
-        } else {
-          binding.flag = true;
+    mounted: function (el: Element, binding: any) {
+      el.finished = true;
+      binding.observer = new IntersectionObserver(callback);
+      function callback(entries: IntersectionObserverEntry[]) {
+        // 如果设置了动画只执行一次，且动画执行过
+        if (!many && binding.executed) binding.observer.unobserve(el);
+        // 目标元素与视口有重合的部分了
+        if (entries[0].isIntersecting && el.finished) {
+          animateNumber(el, Number(el.innerHTML), Date.now(), totalTime);
+          // finished为false表示还有上一次动画还没有结束
+          el.finished = false;
+          // executed表示动画执行过一次
+          binding.executed = true;
         }
-      };
-      window.addEventListener("scroll", binding.animate);
+      }
+      // 观察el元素
+      binding.observer.observe(el);
     },
-    // 自定义绑定的组件销毁时，关闭监听器
-    unbind: function (el: HTMLElement, binding: any) {
-      window.removeEventListener("scroll", binding.animate);
+    // 自定义绑定的组件销毁时，解除观察
+    unmounted: function (el: Element, binding: any) {
+      binding.observer.unobserve(el);
     }
   };
 }
 
-function animateNumber(el: HTMLElement, finalNum: number, startTime: number, totalTime: number) {
+function animateNumber(el: Element, finalNum: number, startTime: number, totalTime: number) {
   const currentTime = Date.now();
   const runTime = currentTime - startTime; // 运行时间
   const progress = Math.min(runTime / totalTime, 1); // 动画进度
@@ -45,4 +38,5 @@ function animateNumber(el: HTMLElement, finalNum: number, startTime: number, tot
   if (runTime < totalTime) {
     requestAnimationFrame(() => animateNumber(el, finalNum, startTime, totalTime));
   }
+  if (el.innerHTML === finalNum + '') el.finished = true;
 }
